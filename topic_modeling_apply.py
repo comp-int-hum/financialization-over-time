@@ -5,6 +5,8 @@ import logging
 import random
 import pickle
 import json
+import gzip
+import sys
 
 # You can pick out specific functions or classes if you want to refer
 # to them directly in your code
@@ -45,23 +47,32 @@ with open("topic_model.bin", "rb") as ifd:
 # Open your file to read ("r") in text mode ("t") as a variable 
 # ("ifd" is what Tom uses when reading files, it stands for 
 # "input file descriptor").
-with open("Documents/CompHuman/karthik.tsv", "rt") as ifd:
-    
+#with open("Documents/CompHuman/karthik.tsv", "rt") as ifd:
+#with open("/data/tlippin1/full_worldbank.jsonl.gz", "rt") as ifd:
+with gzip.open("/data/tlippin1/full_worldbank.jsonl.gz", "rt") as ifd:
+    #/data/tlippin1/full_worldbank.jsonl.gz    
     # Use the file handle to create a CSV file handle, specifying 
     # that the delimiter is actually <TAB> rather than <COMMA>.
-    cifd = csv.DictReader(ifd, delimiter="\t")
+    #cifd = csv.DictReader(ifd, delimiter="\t")
     
     # Iterate over each row of your file: since we used DictReader 
     # above, each row will be a dictionary.
-    for row in cifd:
-        
+    for line in ifd:
+        row = json.loads(line)
+    #for row in ifd:
+
         # This is where we decide which "group" this document belongs to.  Here, we'll take
         # the publication year and make it a bit more coarse-grained by rounding everything
         # to the nearest 10-year span.
-        resolution = 5
-        group_value = int(row["rights_date_used"])
-        if group_value < 1200 or group_value > 2020:
-            continue
+        resolution = 10
+        print(row)
+        print(row.keys())
+        group_value = row["docdt"]
+        #the date format in this data is a timestamp so we're splitting it to get just the year 
+        group_value=int(group_value.split('-')[0])
+        #commented this out because it's not neccessary here
+        #if group_value < 1200 or group_value > 2020:
+        #    continue
         group = group_value - (group_value % resolution)
         
         # Make sure there is a bucket for the group.
@@ -70,12 +81,16 @@ with open("Documents/CompHuman/karthik.tsv", "rt") as ifd:
         # We want to prepare the data the same way we prepared the data that
         # trained the model (there may be situations where we'd do something
         # different, but only with a particularly good reason!).
-        tokens = gpp.split_on_space(
-            gpp.strip_short(
-                gpp.remove_stopwords(
-                    gpp.strip_non_alphanum(
-                        row["full_content"].lower()
-                    ),
+        # added this if statement because gpp.strip_non_alaphanum is returning an error when it runs into boolean objects
+         if not type(row["content"]) is bool:
+             tokens = gpp.split_on_space(
+                 gpp.strip_short(
+                     gpp.remove_stopwords(
+                         gpp.strip_non_alphanum(
+        #removed .lower()from row["content"] because it's returning AttributeError: 'bool' object has no attribute 'lower'
+                             row["content"]
+                                     ),
+                    
                 ),
             minsize=minimum_characters
             )
