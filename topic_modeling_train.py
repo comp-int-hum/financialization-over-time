@@ -5,6 +5,7 @@ import logging
 import random
 import pickle
 import json
+import gzip
 
 # You can pick out specific functions or classes if you want to refer
 # to them directly in your code
@@ -45,7 +46,7 @@ subdocuments = []
 # ("ifd" is what Tom uses when reading files, it stands for 
 # "input file descriptor").
 ### open json file here
-with open("test_worldbank.json", "rt") as ifd:
+with gzip.open("medium_worldbank.jsonl.gz", "rt") as ifd:
     
     # Use the file handle to create a CSV file handle, specifying 
     # that the delimiter is actually <TAB> rather than <COMMA>.
@@ -68,7 +69,7 @@ with open("test_worldbank.json", "rt") as ifd:
             gpp.strip_short(
                 gpp.remove_stopwords(
                     gpp.strip_non_alphanum(
-                        row["full_content"].lower()
+                        row["content"].lower()
                     ),
                 ),
             minsize=minimum_characters
